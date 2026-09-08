@@ -1,0 +1,43 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend:$COMMIT_SHA'
+      - '-t'
+      - 'asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend:latest'
+      - '.'
+
+  # Push the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'phonex-backend'
+      - '--image=asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend:$COMMIT_SHA'
+      - '--region=asia-southeast1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=10'
+      - '--set-env-vars=NODE_ENV=production'
+      - '--set-secrets=DATABASE_URL=PHONEX_DATABASE_URL:latest,JWT_ACCESS_SECRET=PHONEX_JWT_ACCESS_SECRET:latest,JWT_REFRESH_SECRET=PHONEX_JWT_REFRESH_SECRET:latest,RAZORPAY_KEY_ID=PHONEX_RAZORPAY_KEY_ID:latest,RAZORPAY_KEY_SECRET=PHONEX_RAZORPAY_KEY_SECRET:latest,RAZORPAY_WEBHOOK_SECRET=PHONEX_RAZORPAY_WEBHOOK_SECRET:latest,CORS_ORIGIN=PHONEX_CORS_ORIGIN:latest'
+
+images:
+  - 'asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend:$COMMIT_SHA'
+  - 'asia-southeast1-docker.pkg.dev/glassy-archway-437503/phonex/phonex-backend:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
