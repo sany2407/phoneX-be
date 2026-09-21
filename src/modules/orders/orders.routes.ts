@@ -1,14 +1,10 @@
 ﻿import { Router } from 'express';
 import { authenticate } from '../../middleware/auth.middleware';
-import { authorize } from '../../middleware/authorize.middleware';
 import {
   checkoutController,
   getUserOrdersController,
   getOrderByIdController,
   cancelOrderController,
-  adminListOrdersController,
-  adminGetOrderByIdController,
-  adminUpdateOrderStatusController,
 } from './orders.controller';
 
 const router = Router();
@@ -100,60 +96,5 @@ router.get('/:id', authenticate, getOrderByIdController);
  *         description: Order cannot be cancelled in current status
  */
 router.post('/:id/cancel', authenticate, cancelOrderController);
-
-// Admin routes
-/**
- * @swagger
- * /admin/orders:
- *   get:
- *     tags: [Admin]
- *     summary: List all orders
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: status
- *         schema: { type: string }
- *       - in: query
- *         name: page
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Paginated orders list
- */
-router.get('/admin/list', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), adminListOrdersController);
-router.get('/admin/:id', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), adminGetOrderByIdController);
-
-/**
- * @swagger
- * /admin/orders/{id}/status:
- *   patch:
- *     tags: [Admin]
- *     summary: Update order status
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [status]
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [CONFIRMED, PROCESSING, PACKED, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REFUNDED]
- *               note:
- *                 type: string
- *     responses:
- *       200:
- *         description: Order status updated
- */
-router.patch('/admin/:id/status', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), adminUpdateOrderStatusController);
 
 export default router;

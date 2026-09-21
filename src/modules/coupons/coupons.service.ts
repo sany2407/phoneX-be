@@ -39,6 +39,35 @@ export async function validateCoupon(code: string, userId: string, subtotal: num
   };
 }
 
+export async function getActiveCoupons() {
+  const now = new Date();
+  // Fetch active, in-window coupons then filter out exhausted ones in JS
+  const coupons = await prisma.coupon.findMany({
+    where: {
+      isActive: true,
+      validFrom: { lte: now },
+      validUntil: { gte: now },
+    },
+    select: {
+      id: true,
+      code: true,
+      discountType: true,
+      discountValue: true,
+      minOrderValue: true,
+      maxDiscount: true,
+      validUntil: true,
+      usageLimit: true,
+      usedCount: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Strip internal usage fields before returning to client
+  return coupons
+    .filter(c => c.usageLimit === null || c.usedCount < c.usageLimit)
+    .map(({ usageLimit: _ul, usedCount: _uc, ...rest }) => rest);
+}
+
 export async function applyCoupon(couponId: string, userId: string, orderId: string) {
   await prisma.$transaction([
     prisma.coupon.update({ where: { id: couponId }, data: { usedCount: { increment: 1 } } }),

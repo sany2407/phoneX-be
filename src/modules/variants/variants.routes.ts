@@ -1,12 +1,8 @@
 ﻿import { Router } from 'express';
-import { authenticate } from '../../middleware/auth.middleware';
-import { authorize } from '../../middleware/authorize.middleware';
 import {
-  createVariantController,
   getVariantsByProductController,
   getSkinsForModelController,
   getVariantByIdController,
-  updateVariantController,
 } from './variants.controller';
 
 const router = Router();
@@ -30,7 +26,7 @@ router.get('/:id', getVariantByIdController);
 
 /**
  * @swagger
- * /products/{productId}/variants:
+ * /variants/by-product/{productId}:
  *   get:
  *     tags: [Variants]
  *     summary: Get all variants for a product (across all device models)
@@ -47,7 +43,7 @@ router.get('/by-product/:productId', getVariantsByProductController);
 
 /**
  * @swagger
- * /devices/brands/{brandSlug}/models/{modelSlug}/skins:
+ * /variants/skins/{brandSlug}/{modelSlug}:
  *   get:
  *     tags: [Variants]
  *     summary: Get all available skins for a specific device model
@@ -65,36 +61,5 @@ router.get('/by-product/:productId', getVariantsByProductController);
  *         description: Device model with available skin variants
  */
 router.get('/skins/:brandSlug/:modelSlug', getSkinsForModelController);
-
-// Admin
-/**
- * @swagger
- * /admin/variants:
- *   post:
- *     tags: [Admin]
- *     summary: Create a product variant (skin + device model combination)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [productId, deviceModelId, sku, price, stock]
- *             properties:
- *               productId: { type: string }
- *               deviceModelId: { type: string }
- *               sku: { type: string }
- *               price: { type: number }
- *               comparePrice: { type: number }
- *               stock: { type: integer }
- *               images: { type: array, items: { type: string } }
- *     responses:
- *       201:
- *         description: Variant created
- */
-router.post('/admin', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), createVariantController);
-router.put('/admin/:id', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), updateVariantController);
 
 export default router;

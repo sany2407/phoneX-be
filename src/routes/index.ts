@@ -11,7 +11,6 @@ import ordersRoutes from '../modules/orders/orders.routes';
 import paymentsRoutes from '../modules/payments/payments.routes';
 import couponsRoutes from '../modules/coupons/coupons.routes';
 import reviewsRoutes from '../modules/reviews/reviews.routes';
-import inventoryRoutes from '../modules/inventory/inventory.routes';
 import adminRoutes from '../modules/admin/admin.routes';
 
 const router = Router();
@@ -38,6 +37,7 @@ router.get('/health', (_req, res) => {
   });
 });
 
+// Public & user routes
 router.use('/auth', authRoutes);
 router.use('/devices', devicesRoutes);
 router.use('/categories', categoriesRoutes);
@@ -50,7 +50,8 @@ router.use('/orders', ordersRoutes);
 router.use('/payments', paymentsRoutes);
 router.use('/coupons', couponsRoutes);
 router.use('/', reviewsRoutes);
-router.use('/admin/inventory', inventoryRoutes);
+
+// All admin routes — single mount point
 router.use('/admin', adminRoutes);
 
 export default router;

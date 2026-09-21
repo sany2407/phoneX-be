@@ -1,14 +1,10 @@
 ﻿import { Router } from 'express';
 import { authenticate } from '../../middleware/auth.middleware';
-import { authorize } from '../../middleware/authorize.middleware';
 import {
   createReviewController,
   getProductReviewsController,
   updateReviewController,
   deleteReviewController,
-  listPendingReviewsController,
-  approveReviewController,
-  rejectReviewController,
 } from './reviews.controller';
 
 const router = Router();
@@ -108,22 +104,5 @@ router.put('/reviews/:id', authenticate, updateReviewController);
  *         description: Review deleted
  */
 router.delete('/reviews/:id', authenticate, deleteReviewController);
-
-// Admin
-/**
- * @swagger
- * /admin/reviews/pending:
- *   get:
- *     tags: [Admin]
- *     summary: List all pending reviews
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Pending reviews
- */
-router.get('/admin/reviews/pending', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), listPendingReviewsController);
-router.patch('/admin/reviews/:id/approve', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), approveReviewController);
-router.patch('/admin/reviews/:id/reject', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), rejectReviewController);
 
 export default router;

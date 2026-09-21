@@ -2,6 +2,13 @@
 import * as couponsService from './coupons.service';
 import { sendSuccess } from '../../utils/response';
 
+export async function getActiveCouponsController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const coupons = await couponsService.getActiveCoupons();
+    sendSuccess(res, coupons);
+  } catch (err) { next(err); }
+}
+
 export async function validateCouponController(req: Request, res: Response, next: NextFunction) {
   try {
     const { code, subtotal } = req.body;
