@@ -13,6 +13,8 @@ import couponsRoutes from '../modules/coupons/coupons.routes';
 import reviewsRoutes from '../modules/reviews/reviews.routes';
 import adminRoutes from '../modules/admin/admin.routes';
 
+import uploadRoutes from '../modules/upload/upload.routes';
+
 const router = Router();
 
 /**
@@ -53,5 +55,8 @@ router.use('/', reviewsRoutes);
 
 // All admin routes — single mount point
 router.use('/admin', adminRoutes);
+
+// Upload — admin only
+router.use('/upload', uploadRoutes);
 
 export default router;
