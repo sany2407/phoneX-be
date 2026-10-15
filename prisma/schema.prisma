@@ -95,6 +95,19 @@ model RefreshToken {
 
 // ─── Devices ────────────────────────────────────────────
 
+model DeviceType {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  models DeviceModel[]
+
+  @@map("device_types")
+}
+
 model DeviceBrand {
   id        String   @id @default(uuid())
   name      String
@@ -110,17 +123,19 @@ model DeviceBrand {
 }
 
 model DeviceModel {
-  id        String   @id @default(uuid())
-  brandId   String
-  name      String
-  slug      String
-  imageUrl  String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  brandId      String
+  deviceTypeId String?
+  name         String
+  slug         String
+  imageUrl     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  brand    DeviceBrand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  variants ProductVariant[]
+  brand      DeviceBrand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  deviceType DeviceType?     @relation(fields: [deviceTypeId], references: [id])
+  variants   ProductVariant[]
 
   @@unique([brandId, slug])
   @@map("device_models")

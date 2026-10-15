@@ -4,9 +4,40 @@ import {
   getBrandBySlugController,
   getModelsByBrandController,
   getModelBySlugController,
+  getAllDeviceTypesController,
+  getModelsByDeviceTypeController,
 } from './devices.controller';
 
 const router = Router();
+
+/**
+ * @swagger
+ * /devices/types:
+ *   get:
+ *     tags: [Devices]
+ *     summary: Get all device types (smartphone, laptop, tablet, etc.)
+ *     responses:
+ *       200:
+ *         description: List of device types with model count
+ */
+router.get('/types', getAllDeviceTypesController);
+
+/**
+ * @swagger
+ * /devices/types/{typeSlug}/models:
+ *   get:
+ *     tags: [Devices]
+ *     summary: Get all models for a device type across all brands
+ *     parameters:
+ *       - in: path
+ *         name: typeSlug
+ *         required: true
+ *         schema: { type: string, example: smartphone }
+ *     responses:
+ *       200:
+ *         description: Models grouped with brand info
+ */
+router.get('/types/:typeSlug/models', getModelsByDeviceTypeController);
 
 /**
  * @swagger
@@ -34,8 +65,6 @@ router.get('/brands', getAllBrandsController);
  *     responses:
  *       200:
  *         description: Brand with models
- *       404:
- *         description: Brand not found
  */
 router.get('/brands/:brandSlug', getBrandBySlugController);
 
@@ -44,12 +73,16 @@ router.get('/brands/:brandSlug', getBrandBySlugController);
  * /devices/brands/{brandSlug}/models:
  *   get:
  *     tags: [Devices]
- *     summary: Get all models for a brand
+ *     summary: Get all models for a brand, optionally filtered by device type
  *     parameters:
  *       - in: path
  *         name: brandSlug
  *         required: true
  *         schema: { type: string }
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, example: smartphone }
+ *         description: Filter by device type slug
  *     responses:
  *       200:
  *         description: List of device models
@@ -73,9 +106,7 @@ router.get('/brands/:brandSlug/models', getModelsByBrandController);
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Device model detail
- *       404:
- *         description: Not found
+ *         description: Device model detail with brand and type
  */
 router.get('/brands/:brandSlug/models/:modelSlug', getModelBySlugController);
 

@@ -2,6 +2,41 @@
 import { AppError } from '../../middleware/error.middleware';
 import { generateSlug } from '../../utils/slug';
 
+// ─── Device Types (Master) ────────────────────────────────
+
+export async function getAllDeviceTypes() {
+  return prisma.deviceType.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' },
+    include: { _count: { select: { models: { where: { isActive: true } } } } },
+  });
+}
+
+export async function createDeviceType(data: { name: string }) {
+  const slug = generateSlug(data.name);
+  const existing = await prisma.deviceType.findUnique({ where: { slug } });
+  if (existing) throw new AppError('Device type already exists', 409);
+  return prisma.deviceType.create({ data: { name: data.name, slug } });
+}
+
+export async function updateDeviceType(id: string, data: { name?: string; isActive?: boolean }) {
+  await findDeviceTypeById(id);
+  const updateData: Record<string, unknown> = { ...data };
+  if (data.name) updateData.slug = generateSlug(data.name);
+  return prisma.deviceType.update({ where: { id }, data: updateData });
+}
+
+export async function deleteDeviceType(id: string) {
+  await findDeviceTypeById(id);
+  return prisma.deviceType.update({ where: { id }, data: { isActive: false } });
+}
+
+async function findDeviceTypeById(id: string) {
+  const type = await prisma.deviceType.findUnique({ where: { id } });
+  if (!type) throw new AppError('Device type not found', 404);
+  return type;
+}
+
 // ─── Brands ──────────────────────────────────────────────
 
 export async function getAllBrands() {
@@ -19,6 +54,7 @@ export async function getBrandBySlug(slug: string) {
       models: {
         where: { isActive: true },
         orderBy: { name: 'asc' },
+        include: { deviceType: true },
       },
     },
   });
@@ -51,13 +87,21 @@ async function findBrandById(id: string) {
 
 // ─── Models ──────────────────────────────────────────────
 
-export async function getModelsByBrand(brandSlug: string) {
+export async function getModelsByBrand(brandSlug: string, deviceTypeSlug?: string) {
   const brand = await prisma.deviceBrand.findFirst({ where: { slug: brandSlug, isActive: true } });
   if (!brand) throw new AppError('Brand not found', 404);
 
+  const where: Record<string, unknown> = { brandId: brand.id, isActive: true };
+  if (deviceTypeSlug) {
+    const type = await prisma.deviceType.findUnique({ where: { slug: deviceTypeSlug } });
+    if (!type) throw new AppError('Device type not found', 404);
+    where.deviceTypeId = type.id;
+  }
+
   return prisma.deviceModel.findMany({
-    where: { brandId: brand.id, isActive: true },
+    where,
     orderBy: { name: 'asc' },
+    include: { deviceType: true },
   });
 }
 
@@ -67,26 +111,46 @@ export async function getModelBySlug(brandSlug: string, modelSlug: string) {
 
   const model = await prisma.deviceModel.findFirst({
     where: { brandId: brand.id, slug: modelSlug, isActive: true },
-    include: { brand: true },
+    include: { brand: true, deviceType: true },
   });
   if (!model) throw new AppError('Model not found', 404);
   return model;
 }
 
-export async function createModel(data: { brandId: string; name: string; imageUrl?: string }) {
-  const brand = await findBrandById(data.brandId);
+export async function createModel(data: {
+  brandId: string;
+  deviceTypeId?: string;
+  name: string;
+  imageUrl?: string;
+}) {
+  await findBrandById(data.brandId);
+  if (data.deviceTypeId) await findDeviceTypeById(data.deviceTypeId);
   const slug = generateSlug(data.name);
   return prisma.deviceModel.create({
-    data: { brandId: brand.id, name: data.name, slug, imageUrl: data.imageUrl },
-    include: { brand: true },
+    data: {
+      brandId: data.brandId,
+      deviceTypeId: data.deviceTypeId,
+      name: data.name,
+      slug,
+      imageUrl: data.imageUrl,
+    },
+    include: { brand: true, deviceType: true },
   });
 }
 
-export async function updateModel(id: string, data: { name?: string; imageUrl?: string; isActive?: boolean }) {
+export async function updateModel(
+  id: string,
+  data: { name?: string; deviceTypeId?: string; imageUrl?: string; isActive?: boolean }
+) {
   await findModelById(id);
+  if (data.deviceTypeId) await findDeviceTypeById(data.deviceTypeId);
   const updateData: Record<string, unknown> = { ...data };
   if (data.name) updateData.slug = generateSlug(data.name);
-  return prisma.deviceModel.update({ where: { id }, data: updateData, include: { brand: true } });
+  return prisma.deviceModel.update({
+    where: { id },
+    data: updateData,
+    include: { brand: true, deviceType: true },
+  });
 }
 
 export async function deleteModel(id: string) {
@@ -98,4 +162,19 @@ async function findModelById(id: string) {
   const model = await prisma.deviceModel.findUnique({ where: { id } });
   if (!model) throw new AppError('Model not found', 404);
   return model;
+}
+
+// ─── List models by device type (cross-brand) ────────────
+
+export async function getModelsByDeviceType(deviceTypeSlug: string) {
+  const type = await prisma.deviceType.findUnique({
+    where: { slug: deviceTypeSlug },
+  });
+  if (!type) throw new AppError('Device type not found', 404);
+
+  return prisma.deviceModel.findMany({
+    where: { deviceTypeId: type.id, isActive: true },
+    orderBy: [{ brand: { name: 'asc' } }, { name: 'asc' }],
+    include: { brand: true, deviceType: true },
+  });
 }

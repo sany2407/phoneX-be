@@ -52,6 +52,9 @@ import {
   createModelController,
   updateModelController,
   deleteModelController,
+  createDeviceTypeController,
+  updateDeviceTypeController,
+  deleteDeviceTypeController,
 } from '../devices/devices.controller';
 
 // Orders controllers
@@ -582,6 +585,69 @@ router.post('/variants', createVariantController);
  */
 router.put('/variants/:id', updateVariantController);
 
+// ─── Device Types ─────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/devices/types:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a device type (e.g. Smartphone, Laptop, Tablet)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string, example: Smartphone }
+ *     responses:
+ *       201:
+ *         description: Device type created
+ */
+router.post('/devices/types', createDeviceTypeController);
+
+/**
+ * @swagger
+ * /admin/devices/types/{id}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Update a device type
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Device type updated
+ */
+router.put('/devices/types/:id', updateDeviceTypeController);
+
+/**
+ * @swagger
+ * /admin/devices/types/{id}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Deactivate a device type
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Device type deactivated
+ */
+router.delete('/devices/types/:id', deleteDeviceTypeController);
+
 // ─── Devices ─────────────────────────────────────────────────
 
 /**
@@ -660,9 +726,10 @@ router.delete('/devices/brands/:id', deleteBrandController);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [brandId, name]
+ *             required: [brandId, deviceTypeId, name]
  *             properties:
  *               brandId: { type: string }
+ *               deviceTypeId: { type: string }
  *               name: { type: string }
  *               imageUrl: { type: string }
  *     responses:
