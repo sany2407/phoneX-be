@@ -52,6 +52,7 @@ import {
   createModelController,
   updateModelController,
   deleteModelController,
+  listDeviceTypesController,
   createDeviceTypeController,
   updateDeviceTypeController,
   deleteDeviceTypeController,
@@ -586,6 +587,20 @@ router.post('/variants', createVariantController);
 router.put('/variants/:id', updateVariantController);
 
 // ─── Device Types ─────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/devices/types:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List all device types including inactive ones
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Device types with model counts
+ */
+router.get('/devices/types', listDeviceTypesController);
 
 /**
  * @swagger

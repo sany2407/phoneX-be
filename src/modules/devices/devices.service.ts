@@ -12,6 +12,14 @@ export async function getAllDeviceTypes() {
   });
 }
 
+/** Admin list — includes inactive types so they can be managed/reactivated. */
+export async function getAllDeviceTypesAdmin() {
+  return prisma.deviceType.findMany({
+    orderBy: { name: 'asc' },
+    include: { _count: { select: { models: { where: { isActive: true } } } } },
+  });
+}
+
 export async function createDeviceType(data: { name: string }) {
   const slug = generateSlug(data.name);
   const existing = await prisma.deviceType.findUnique({ where: { slug } });

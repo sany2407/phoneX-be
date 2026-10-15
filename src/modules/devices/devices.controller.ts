@@ -11,6 +11,13 @@ export async function getAllDeviceTypesController(req: Request, res: Response, n
   } catch (err) { next(err); }
 }
 
+export async function listDeviceTypesController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const types = await devicesService.getAllDeviceTypesAdmin();
+    sendSuccess(res, types);
+  } catch (err) { next(err); }
+}
+
 export async function createDeviceTypeController(req: Request, res: Response, next: NextFunction) {
   try {
     const type = await devicesService.createDeviceType(req.body);
