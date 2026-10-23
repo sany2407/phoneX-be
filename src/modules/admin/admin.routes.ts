@@ -36,6 +36,7 @@ import {
   updateProductController,
   deleteProductController,
   addProductImagesController,
+  createProductWithVariantsController,
 } from '../products/products.controller';
 
 // Variants controllers
@@ -443,6 +444,47 @@ router.put('/coupons/:id', updateCouponController);
 router.delete('/coupons/:id', deactivateCouponController);
 
 // ─── Products ────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/products/with-variants:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a product with all its variants in one request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, categoryId, variants]
+ *             properties:
+ *               name: { type: string, example: "Spider-Man Web Swing" }
+ *               description: { type: string }
+ *               categoryId: { type: string }
+ *               images: { type: array, items: { type: string }, description: "Design/artwork image URLs" }
+ *               isFeatured: { type: boolean, default: false }
+ *               variants:
+ *                 type: array
+ *                 description: One entry per device model
+ *                 items:
+ *                   type: object
+ *                   required: [deviceModelId, price, stock]
+ *                   properties:
+ *                     deviceModelId: { type: string }
+ *                     price: { type: number, example: 499 }
+ *                     comparePrice: { type: number, example: 599 }
+ *                     stock: { type: integer, example: 50 }
+ *                     images: { type: array, items: { type: string }, description: "Phone mockup images" }
+ *     responses:
+ *       201:
+ *         description: Product created with all variants
+ *       400:
+ *         description: Duplicate device models in variants list
+ */
+router.post('/products/with-variants', createProductWithVariantsController);
 
 /**
  * @swagger
