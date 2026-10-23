@@ -85,6 +85,8 @@ export async function deleteReview(userId: string, reviewId: string) {
   const review = await prisma.review.findFirst({ where: { id: reviewId, userId } });
   if (!review) throw new AppError('Review not found', 404);
   await prisma.review.delete({ where: { id: reviewId } });
+  const { recomputeProductRating } = await import('../products/products.service');
+  await recomputeProductRating(review.productId);
 }
 
 export async function listPendingReviews(query: { page?: string; limit?: string }) {
@@ -107,11 +109,30 @@ export async function listPendingReviews(query: { page?: string; limit?: string 
 export async function approveReview(reviewId: string) {
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
   if (!review) throw new AppError('Review not found', 404);
-  return prisma.review.update({ where: { id: reviewId }, data: { isApproved: true } });
+  const updated = await prisma.review.update({ where: { id: reviewId }, data: { isApproved: true } });
+  await recomputeProductRating(review.productId);
+  return updated;
 }
 
 export async function rejectReview(reviewId: string) {
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
   if (!review) throw new AppError('Review not found', 404);
   await prisma.review.delete({ where: { id: reviewId } });
+  await recomputeProductRating(review.productId);
+}
+
+/** Recompute a product's stored rating average + count from approved reviews. */
+export async function recomputeProductRating(productId: string) {
+  const agg = await prisma.review.aggregate({
+    where: { productId, isApproved: true },
+    _avg: { rating: true },
+    _count: { rating: true },
+  });
+  await prisma.product.update({
+    where: { id: productId },
+    data: {
+      rating: agg._avg.rating ?? 0,
+      reviewCount: agg._count.rating,
+    },
+  });
 }

@@ -3,6 +3,7 @@ import {
   listProductsController,
   getProductBySlugController,
   getFeaturedProductsController,
+  getProductFacetsController,
   searchProductsController,
 } from './products.controller';
 
@@ -25,11 +26,38 @@ const router = Router();
  *         name: categoryId
  *         schema: { type: string }
  *       - in: query
+ *         name: material
+ *         schema: { type: string }
+ *         description: Comma-separated materials
+ *       - in: query
+ *         name: finish
+ *         schema: { type: string }
+ *         description: Comma-separated finishes
+ *       - in: query
+ *         name: minRating
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxPrice
+ *         schema: { type: number }
+ *         description: Only products with a variant at or under this price
+ *       - in: query
+ *         name: inStock
+ *         schema: { type: boolean }
+ *         description: Only products with a stocked variant
+ *       - in: query
+ *         name: deviceType
+ *         schema: { type: string, example: smartphone }
+ *         description: Filter by device type slug (via variants)
+ *       - in: query
+ *         name: onSale
+ *         schema: { type: boolean }
+ *         description: Only products with a discount
+ *       - in: query
  *         name: search
  *         schema: { type: string }
  *       - in: query
  *         name: sort
- *         schema: { type: string, enum: [newest, name_asc, name_desc] }
+ *         schema: { type: string, enum: [newest, name_asc, name_desc, featured, popular, price-asc, price-desc, rating] }
  *     responses:
  *       200:
  *         description: Paginated list of products
@@ -47,6 +75,18 @@ router.get('/', listProductsController);
  *         description: List of featured products
  */
 router.get('/featured', getFeaturedProductsController);
+
+/**
+ * @swagger
+ * /products/facets:
+ *   get:
+ *     tags: [Products]
+ *     summary: Distinct materials and finishes across active products
+ *     responses:
+ *       200:
+ *         description: Filter facet values
+ */
+router.get('/facets', getProductFacetsController);
 
 /**
  * @swagger

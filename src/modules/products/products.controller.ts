@@ -16,6 +16,13 @@ export async function getProductBySlugController(req: Request, res: Response, ne
   } catch (err) { next(err); }
 }
 
+export async function getProductFacetsController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const facets = await productsService.getProductFacets();
+    sendSuccess(res, facets);
+  } catch (err) { next(err); }
+}
+
 export async function getFeaturedProductsController(req: Request, res: Response, next: NextFunction) {
   try {
     const products = await productsService.getFeaturedProducts();
@@ -27,6 +34,13 @@ export async function searchProductsController(req: Request, res: Response, next
   try {
     const products = await productsService.searchProducts(req.query.q as string);
     sendSuccess(res, products);
+  } catch (err) { next(err); }
+}
+
+export async function createProductWithVariantsController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const product = await productsService.createProductWithVariants(req.body);
+    sendSuccess(res, product, 201, 'Product and variants created');
   } catch (err) { next(err); }
 }
 
