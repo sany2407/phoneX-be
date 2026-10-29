@@ -22,13 +22,17 @@ app.use(cors({
   credentials: true,
 }));
 
-// Rate limiting
+// Rate limiting — tunable per environment, because a frontend build alone
+// costs ~66 requests against the catalogue endpoints.
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  windowMs: env.RATE_LIMIT_WINDOW_MINUTES * 60 * 1000,
+  max: env.RATE_LIMIT_MAX,
   message: { success: false, message: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // Health probes must never consume quota (or be locked out), otherwise a
+  // container healthcheck can fail and take the API down.
+  skip: (req) => req.path === '/v1/health',
 });
 app.use('/api', limiter);
 

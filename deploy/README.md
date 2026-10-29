@@ -133,4 +133,5 @@ dependency for exactly this reason — it must not be dropped from
 | `Can't reach database server` | Aiven allowlist, or the Aiven service is powered off |
 | `502 Bad Gateway` | Container down — `docker compose ps`, then `logs` |
 | CORS errors in the browser | `CORS_ORIGIN` does not match the frontend origin exactly |
+| `429 Too many requests` | `RATE_LIMIT_MAX` is too low for the traffic; raise it in `.env` and restart |
 | `ERR_TOO_MANY_REDIRECTS` | `trust proxy` and the `X-Forwarded-Proto` header disagree |

@@ -15,6 +15,9 @@ const envSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().min(1, 'RAZORPAY_KEY_SECRET is required'),
   RAZORPAY_WEBHOOK_SECRET: z.string().min(1, 'RAZORPAY_WEBHOOK_SECRET is required'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  // Rate limiting — per client IP, per window.
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(200),
+  RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().positive().default(15),
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string().min(1, 'CLOUDINARY_CLOUD_NAME is required'),
   CLOUDINARY_API_KEY: z.string().min(1, 'CLOUDINARY_API_KEY is required'),
