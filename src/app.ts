@@ -10,6 +10,11 @@ import apiRouter from './routes/index';
 
 const app = express();
 
+// Behind nginx: trust exactly one proxy hop so req.ip is the real client.
+// Without this the rate limiter keys every request to the nginx socket and
+// one visitor can exhaust the quota for everybody.
+app.set('trust proxy', 1);
+
 // Security
 app.use(helmet());
 app.use(cors({

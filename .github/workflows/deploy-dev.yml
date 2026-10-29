@@ -1,0 +1,43 @@
+name: Deploy API to EC2 (dev)
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+# Never let two deploys race on the same instance.
+concurrency:
+  group: deploy-api-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy
+    runs-on: ubuntu-latest
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deployment configuration
+        run: |
+          if [ -z "$EC2_HOST" ]; then
+            echo "::notice title=Deploy skipped::EC2_HOST is not set. Add EC2_HOST, EC2_USER and EC2_SSH_KEY as repository secrets to enable auto-deploy."
+            echo "SKIP_DEPLOY=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure SSH
+        if: env.SKIP_DEPLOY != '1'
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy over SSH
+        if: env.SKIP_DEPLOY != '1'
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes \
+            "$EC2_USER@$EC2_HOST" 'bash -s' < deploy/remote-deploy.sh
