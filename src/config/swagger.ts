@@ -15,8 +15,10 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: '/api/v1',
-        description: 'Development server',
+        // Absolute, so an exported spec (Postman, Insomnia, codegen) knows
+        // where to send requests instead of resolving "/api/v1" relatively.
+        url: `${(process.env.API_PUBLIC_URL ?? `http://localhost:${process.env.PORT ?? '3000'}`).replace(/\/+$/, '')}/api/v1`,
+        description: 'Current server',
       },
     ],
     components: {

@@ -45,6 +45,10 @@ RUN npx prisma generate
 # Copy compiled output from builder
 COPY --from=builder /app/dist ./dist
 
+# swagger-jsdoc reads the @swagger JSDoc out of the route sources at boot,
+# so the spec is empty unless src/ ships with the image.
+COPY --from=builder /app/src ./src
+
 # Copy SSL certificate for Aiven PostgreSQL
 COPY ca.pem ./ca.pem
 
