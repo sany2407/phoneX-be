@@ -6,6 +6,7 @@ import {
   getModelBySlugController,
   getAllDeviceTypesController,
   getModelsByDeviceTypeController,
+  getAvailableCategoriesController,
 } from './devices.controller';
 
 const router = Router();
@@ -21,6 +22,35 @@ const router = Router();
  *         description: List of device types with model count
  */
 router.get('/types', getAllDeviceTypesController);
+
+/**
+ * @swagger
+ * /devices/categories:
+ *   get:
+ *     tags: [Devices]
+ *     summary: Design categories that have skins for a device type or brand
+ *     description: >
+ *       Returns the design categories that actually have active skins for the
+ *       given device scope, each with the ids of the device models they cover.
+ *       Exactly one of `type` and `brand` is required.
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema: { type: string, example: smartphone }
+ *       - in: query
+ *         name: brand
+ *         required: false
+ *         schema: { type: string, example: apple }
+ *     responses:
+ *       200:
+ *         description: Categories with their covered model ids
+ *       400:
+ *         description: Exactly one of type or brand is required
+ *       404:
+ *         description: Unknown type or brand slug
+ */
+router.get('/categories', getAvailableCategoriesController);
 
 /**
  * @swagger

@@ -186,3 +186,61 @@ export async function getModelsByDeviceType(deviceTypeSlug: string) {
     include: { brand: true, deviceType: true },
   });
 }
+
+// ─── Categories with skins on real devices ───────────────
+
+/**
+ * Design categories that actually have skins available for the given device
+ * scope, each carrying the device models it covers. The storefront device
+ * pages use this so category filtering reflects live inventory instead of
+ * listing every category in the catalogue.
+ *
+ * Exactly one of `typeSlug` and `brandSlug` must be provided.
+ */
+export async function getAvailableCategories(filter: { typeSlug?: string; brandSlug?: string }) {
+  if (Boolean(filter.typeSlug) === Boolean(filter.brandSlug)) {
+    throw new AppError('Provide exactly one of ?type or ?brand', 400);
+  }
+
+  const deviceModelWhere: Record<string, unknown> = { isActive: true };
+  if (filter.typeSlug) {
+    const type = await prisma.deviceType.findUnique({ where: { slug: filter.typeSlug } });
+    if (!type) throw new AppError('Device type not found', 404);
+    deviceModelWhere.deviceTypeId = type.id;
+  } else {
+    const brand = await prisma.deviceBrand.findUnique({ where: { slug: filter.brandSlug as string } });
+    if (!brand) throw new AppError('Device brand not found', 404);
+    deviceModelWhere.brandId = brand.id;
+  }
+
+  const variants = await prisma.productVariant.findMany({
+    where: {
+      isActive: true,
+      deviceModel: deviceModelWhere,
+      product: { isActive: true, category: { isActive: true } },
+    },
+    select: {
+      deviceModelId: true,
+      product: {
+        select: { category: { select: { id: true, name: true, slug: true } } },
+      },
+    },
+  });
+
+  type CategoryCoverage = { id: string; name: string; slug: string; modelIds: string[] };
+  const byCategory = new Map<string, CategoryCoverage>();
+  for (const variant of variants) {
+    const category = variant.product.category;
+    if (!category) continue;
+    let entry = byCategory.get(category.id);
+    if (!entry) {
+      entry = { ...category, modelIds: [] };
+      byCategory.set(category.id, entry);
+    }
+    if (!entry.modelIds.includes(variant.deviceModelId)) {
+      entry.modelIds.push(variant.deviceModelId);
+    }
+  }
+
+  return [...byCategory.values()].sort((a, b) => a.name.localeCompare(b.name));
+}

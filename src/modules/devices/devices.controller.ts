@@ -46,6 +46,20 @@ export async function getModelsByDeviceTypeController(req: Request, res: Respons
   } catch (err) { next(err); }
 }
 
+// ─── Categories with skins on real devices ───────────────
+
+export async function getAvailableCategoriesController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const type = typeof req.query.type === 'string' ? req.query.type : undefined;
+    const brand = typeof req.query.brand === 'string' ? req.query.brand : undefined;
+    const categories = await devicesService.getAvailableCategories({
+      typeSlug: type,
+      brandSlug: brand,
+    });
+    sendSuccess(res, categories);
+  } catch (err) { next(err); }
+}
+
 // ─── Brands ───────────────────────────────────────────────
 
 export async function getAllBrandsController(req: Request, res: Response, next: NextFunction) {
