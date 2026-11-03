@@ -88,19 +88,19 @@ async function main() {
   const apple = await prisma.deviceBrand.upsert({
     where: { slug: 'apple' },
     update: {},
-    create: { name: 'Apple', slug: 'apple', logoUrl: 'https://cdn.phonex.in/brands/apple.png' },
+    create: { name: 'Apple', slug: 'apple' },
   });
 
   const samsung = await prisma.deviceBrand.upsert({
     where: { slug: 'samsung' },
     update: {},
-    create: { name: 'Samsung', slug: 'samsung', logoUrl: 'https://cdn.phonex.in/brands/samsung.png' },
+    create: { name: 'Samsung', slug: 'samsung' },
   });
 
   const oneplus = await prisma.deviceBrand.upsert({
     where: { slug: 'oneplus' },
     update: {},
-    create: { name: 'OnePlus', slug: 'oneplus', logoUrl: 'https://cdn.phonex.in/brands/oneplus.png' },
+    create: { name: 'OnePlus', slug: 'oneplus' },
   });
 
   // Apple models

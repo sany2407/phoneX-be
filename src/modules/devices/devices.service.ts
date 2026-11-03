@@ -70,16 +70,61 @@ export async function getBrandBySlug(slug: string) {
   return brand;
 }
 
-export async function createBrand(data: { name: string; logoUrl?: string }) {
-  const slug = generateSlug(data.name);
-  return prisma.deviceBrand.create({ data: { name: data.name, slug, logoUrl: data.logoUrl } });
+export async function createBrand(data: { name: string; slug?: string; logoUrl?: string | null }) {
+  const name = data.name?.trim();
+  if (!name) throw new AppError('Brand name is required', 400);
+
+  const slug = await resolveBrandSlug(data.slug || generateSlug(name));
+
+  return prisma.deviceBrand.create({
+    data: { name, slug, logoUrl: normalizeImageUrl(data.logoUrl) },
+  });
 }
 
-export async function updateBrand(id: string, data: { name?: string; logoUrl?: string; isActive?: boolean }) {
+export async function updateBrand(
+  id: string,
+  data: { name?: string; slug?: string; logoUrl?: string | null; isActive?: boolean }
+) {
   await findBrandById(id);
-  const updateData: Record<string, unknown> = { ...data };
-  if (data.name) updateData.slug = generateSlug(data.name);
+  const updateData: Record<string, unknown> = {};
+
+  if (data.name !== undefined) {
+    const name = data.name.trim();
+    if (!name) throw new AppError('Brand name is required', 400);
+    updateData.name = name;
+    // Keep the slug stable unless the admin explicitly supplies a new one.
+    if (data.slug === undefined) updateData.slug = await resolveBrandSlug(generateSlug(name), id);
+  }
+  if (data.slug !== undefined) updateData.slug = await resolveBrandSlug(data.slug, id);
+  if (data.logoUrl !== undefined) updateData.logoUrl = normalizeImageUrl(data.logoUrl);
+  if (data.isActive !== undefined) updateData.isActive = Boolean(data.isActive);
+
   return prisma.deviceBrand.update({ where: { id }, data: updateData });
+}
+
+/** Normalise a slug and reject collisions (including deactivated brands). */
+async function resolveBrandSlug(raw: string, excludeId?: string) {
+  const slug = generateSlug(raw);
+  if (!slug) throw new AppError('A valid slug is required', 400);
+
+  const clash = await prisma.deviceBrand.findFirst({
+    where: { slug, ...(excludeId ? { id: { not: excludeId } } : {}) },
+    select: { id: true },
+  });
+  if (clash) throw new AppError(`Slug "${slug}" is already in use`, 409);
+
+  return slug;
+}
+
+/** Empty string / whitespace clears the field; anything else must be an http(s) URL. */
+function normalizeImageUrl(value?: string | null): string | null {
+  if (value === undefined || value === null) return null;
+  const url = value.trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) {
+    throw new AppError('Image URL must start with http:// or https://', 400);
+  }
+  return url;
 }
 
 export async function deleteBrand(id: string) {
@@ -129,7 +174,7 @@ export async function createModel(data: {
   brandId: string;
   deviceTypeId?: string;
   name: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
 }) {
   await findBrandById(data.brandId);
   if (data.deviceTypeId) await findDeviceTypeById(data.deviceTypeId);
@@ -140,7 +185,7 @@ export async function createModel(data: {
       deviceTypeId: data.deviceTypeId,
       name: data.name,
       slug,
-      imageUrl: data.imageUrl,
+      imageUrl: normalizeImageUrl(data.imageUrl),
     },
     include: { brand: true, deviceType: true },
   });
@@ -148,12 +193,13 @@ export async function createModel(data: {
 
 export async function updateModel(
   id: string,
-  data: { name?: string; deviceTypeId?: string; imageUrl?: string; isActive?: boolean }
+  data: { name?: string; deviceTypeId?: string; imageUrl?: string | null; isActive?: boolean }
 ) {
   await findModelById(id);
   if (data.deviceTypeId) await findDeviceTypeById(data.deviceTypeId);
   const updateData: Record<string, unknown> = { ...data };
   if (data.name) updateData.slug = generateSlug(data.name);
+  if (data.imageUrl !== undefined) updateData.imageUrl = normalizeImageUrl(data.imageUrl);
   return prisma.deviceModel.update({
     where: { id },
     data: updateData,

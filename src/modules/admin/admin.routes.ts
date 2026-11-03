@@ -724,10 +724,18 @@ router.delete('/devices/types/:id', deleteDeviceTypeController);
  *             required: [name]
  *             properties:
  *               name: { type: string }
- *               logoUrl: { type: string }
+ *               slug:
+ *                 type: string
+ *                 description: Optional custom slug; generated from the name when omitted
+ *               logoUrl:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Cloudinary URL from POST /upload/single?folder=brands
  *     responses:
  *       201:
  *         description: Brand created
+ *       409:
+ *         description: Slug already in use
  */
 router.post('/devices/brands', createBrandController);
 
