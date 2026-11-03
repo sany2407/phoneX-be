@@ -268,12 +268,29 @@ export async function getAvailableCategories(filter: { typeSlug?: string; brandS
     select: {
       deviceModelId: true,
       product: {
-        select: { category: { select: { id: true, name: true, slug: true } } },
+        select: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              imageUrl: true,
+            },
+          },
+        },
       },
     },
   });
 
-  type CategoryCoverage = { id: string; name: string; slug: string; modelIds: string[] };
+  type CategoryCoverage = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    imageUrl: string | null;
+    modelIds: string[];
+  };
   const byCategory = new Map<string, CategoryCoverage>();
   for (const variant of variants) {
     const category = variant.product.category;
